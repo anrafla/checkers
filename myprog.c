@@ -244,7 +244,7 @@ int FindLegalMoves(struct State *state)
 				}
 			}    
 		}
-	  
+
 	}
 	if(jumpptr) {
 		for(x=0; x<jumpptr; x++) 
@@ -283,7 +283,7 @@ void FindBestMove(int player)
 	currBestVal=-10000000;
 
 	fprintf(stderr, "Performing depth %i search");
-	
+
 	for(x = 0; x<state.numLegalMoves; x++){
 		double rval;
 		char nextBoard[8][8];
@@ -298,7 +298,7 @@ void FindBestMove(int player)
 		}
 		i=currBestMove;
 		memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
-	
+
 	}
 	//fprintf(stderr, "We found a best move!, currBestVal: %i", currBestVal);
 }
@@ -429,9 +429,9 @@ int main(int argc, char *argv[])
 	/* Set up the board */ 
 	ResetBoard();
 	srand((unsigned int)time(0));
-	
+
 	if (player1) {
-		
+
 		start = times(&bff);
 		goto determine_next_move;
 	}
@@ -474,30 +474,50 @@ double evalBoard(struct State *currBoard)
 	int x=0;
 	int y=0;
 
-	//while(x<8){
-	//	while(y<8){
-
-	//	}
-//	}
-
-	for(x=0; x<8; x++){
-		for(y=0; y<8; y++){
-			if(king(currBoard->board[x][y])){
-				if(color(currBoard->board[x][y]) == 1){
-					 red_total+=2;
+	while(y<8){
+		if(y%2) x=0;
+		else x=1;
+		while(x<8){
+			if(king(currBoard->board[y][x])){
+				if(color(currBoard->board[y][x]) == 1){
+					red_total+=2;
 
 				} else{ 
 					white_total+=2;
 				}
-			} else if(piece(currBoard->board[x][y])) {//pawn
-				if(color(currBoard->board[x][y]) == 1) {
+			} else if(piece(currBoard->board[y][x])) {//pawn
+				if(color(currBoard->board[y][x]) == 1) {
 					red_total+=1;
 				} else {
 					white_total+=1;
 				}
 			}
+			x+=2;
 		}
+
+		y++;
 	}
+
+	// 	for(x=0; x<8; x++){
+	// 		for(y=0; y<8; y++){
+	// 			if(king(currBoard->board[x][y])){
+	// 				if(color(currBoard->board[x][y]) == 1){
+	// 					 red_total+=2;
+	// 
+	// 				} else{ 
+	// 					white_total+=2;
+	// 				}
+	// 			} else if(piece(currBoard->board[x][y])) {//pawn
+	// 				if(color(currBoard->board[x][y]) == 1) {
+	// 					red_total+=1;
+	// 				} else {
+	// 					white_total+=1;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	fprintf(stderr, "Red Board: %i\n", red_total);
+	fprintf(stderr, "White Board: %i\n", white_total);
 	if(me==1) return red_total-white_total;
 	else return white_total-red_total;
 
@@ -505,74 +525,74 @@ double evalBoard(struct State *currBoard)
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
 {
-    int i;
-    struct State state;
- 
-    /* Set up the current state */
-    memcpy(state.board,currBoard,64*sizeof(char));
- 
-    // Deal with depth limit
-    depth--;
-    if(depth<=0)
-    {
-        state.player=me;
-        return evalBoard(&state);
-    }
- 
-    // You've gotta setup the board with the correct player
-    state.player = ((me==1)?2:1);
-    /* Find the legal moves for the current state */
-    FindLegalMoves(&state);
- 
-    // for every legal move
-    for(i=0;i<state.numLegalMoves;i++)
-    {
-        char nextBoard[8][8];
-        double max;
-        memcpy(nextBoard,currBoard,sizeof(nextBoard));
-        PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
- 
-        max = maxVal(nextBoard, alpha, beta, depth);
-        if(max<beta) beta=max;
-        if(alpha>=beta) return alpha;
-    }
-    return beta;
+	int i;
+	struct State state;
+
+	/* Set up the current state */
+	memcpy(state.board,currBoard,64*sizeof(char));
+
+	// Deal with depth limit
+	depth--;
+	if(depth<=0)
+	{
+		state.player=me;
+		return evalBoard(&state);
+	}
+
+	// You've gotta setup the board with the correct player
+	state.player = ((me==1)?2:1);
+	/* Find the legal moves for the current state */
+	FindLegalMoves(&state);
+
+	// for every legal move
+	for(i=0;i<state.numLegalMoves;i++)
+	{
+		char nextBoard[8][8];
+		double max;
+		memcpy(nextBoard,currBoard,sizeof(nextBoard));
+		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
+
+		max = maxVal(nextBoard, alpha, beta, depth);
+		if(max<beta) beta=max;
+		if(alpha>=beta) return alpha;
+	}
+	return beta;
 }
- 
+
 double maxVal(char currBoard[8][8], double alpha, double beta, int depth)
 {
-    int i;
-    struct State state;
- 
-    /* Set up the next state's board */
-    memcpy(state.board,currBoard,64*sizeof(char));
- 
-    // Deal with depth limit
-    depth--;
-    if(depth<=0)
-    {
-        state.player = me;
-        return evalBoard(&state);
-    }
- 
-    // You've gotta setup the board with the correct player, 
-    state.player = ((me==1)?1:2);
- 
-    /* Find the legal moves for the current state */
-    FindLegalMoves(&state);
- 
-    // for every legal move
-    for(i=0;i<state.numLegalMoves;i++)
-    {
-        char nextBoard[8][8];
-        double min;
-        memcpy(nextBoard,currBoard,sizeof(nextBoard));
-        PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
- 
-        min = minVal(nextBoard, alpha, beta, depth);
-        if(min>alpha) alpha = min;
-        if(alpha>=beta) return beta;
-    }
- 
-    return alpha;
+	int i;
+	struct State state;
+
+	/* Set up the next state's board */
+	memcpy(state.board,currBoard,64*sizeof(char));
+
+	// Deal with depth limit
+	depth--;
+	if(depth<=0)
+	{
+		state.player = me;
+		return evalBoard(&state);
+	}
+
+	// You've gotta setup the board with the correct player, 
+	state.player = ((me==1)?1:2);
+
+	/* Find the legal moves for the current state */
+	FindLegalMoves(&state);
+
+	// for every legal move
+	for(i=0;i<state.numLegalMoves;i++)
+	{
+		char nextBoard[8][8];
+		double min;
+		memcpy(nextBoard,currBoard,sizeof(nextBoard));
+		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
+
+		min = minVal(nextBoard, alpha, beta, depth);
+		if(min>alpha) alpha = min;
+		if(alpha>=beta) return beta;
+	}
+
+	return alpha;
 }
