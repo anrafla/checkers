@@ -1,0 +1,22 @@
+double evalBoard(State *currBoard)
+{
+	double score = 0.0;
+	white_total = 0;
+	red_total = 0;
+
+	for(int x=0; x<8;x++){
+		for(int y=0; y<8; y++){
+			if board[x][y] is a king
+				if its a red king red_total+=2//somevalue
+				else white_total+=2//same value
+			elseif board[x][y] is a pawn
+				if its red red_total+=1
+				else white_total+1
+			currBoard->board[x][y]		
+		}			
+	}
+	if(me == 1) return red_total-white_total;//if player 1 is red, and im p1
+	else return white_total-red_total
+	return score;
+
+}
