@@ -516,8 +516,8 @@ double evalBoard(struct State *currBoard)
 	// 			}
 	// 		}
 	// 	}
-	fprintf(stderr, "Red Board: %i\n", red_total);
-	fprintf(stderr, "White Board: %i\n", white_total);
+	//fprintf(stderr, "Red Board: %i\n", red_total);
+//	fprintf(stderr, "White Board: %i\n", white_total);
 	if(me==1) return red_total-white_total;
 	else return white_total-red_total;
 
