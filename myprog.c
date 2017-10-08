@@ -276,9 +276,11 @@ void FindBestMove(int player)
 
 	/* Find the legal moves for the current state */
 	FindLegalMoves(&state);
-	int bestMoves[48][12];
-	int dups = 0;
-	int uniqueBest = 0;
+	//int bestMoves[48][12];
+	//int dups = 0;
+	//int uniqueBest = 0;
+	currBestMove=rand()%state.numLegalMoves;
+    currBestVal=-10000000;
 	// For now, until you write your search routine, we will just set the best move
 	for(x = 0; x<state.numLegalMoves; x++){
 		double rval;
@@ -607,8 +609,8 @@ double numProtected(struct State *currBoard){
 
 double evalBoard(struct State *currBoard)
 {
-    return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
-    //return materialAdvantage(currBoard);
+   // return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
+    return materialAdvantage(currBoard);
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
