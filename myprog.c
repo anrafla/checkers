@@ -276,10 +276,12 @@ void FindBestMove(int player)
 
 	/* Find the legal moves for the current state */
 	FindLegalMoves(&state);
-	//int bestMoves[48][12];
-	//int dups = 0;
-	//int uniqueBest = 0;
-	currBestMove=rand()%state.numLegalMoves;
+	char bestMoves[48][12];
+    memset(bestMoves, 0, 48*sizeof(char));
+	//inIt dups = 0;
+	int uniqueBest = 0;
+	
+    currBestMove=rand()%state.numLegalMoves;
     currBestVal=-10000000;
 	// For now, until you write your search routine, we will just set the best move
 	for(x = 0; x<state.numLegalMoves; x++){
@@ -291,23 +293,20 @@ void FindBestMove(int player)
 		rval = minVal(nextBoard, -1000000, 1000000, MaxDepth);
 
 		if(currBestVal<=rval){//play more randomly, maybe store in an array, for duplicates of same score
-	/*		if(currBestVal==rval){
-				bestMoves[uniqueBest][dups]=x;
-				dups++;
+			if(currBestVal==rval){
+				memcpy(bestMoves[uniqueBest], state.movelist[x], sizeof(state.movelist[x]));
+				uniqueBest++;
 			}
 			else{
-				dups=0;
-				uniqueBest++;
-				bestMoves[uniqueBest][dups]=x;
+		        uniqueBest=1;
+				memcpy(bestMoves[0], state.movelist[x], sizeof(state.movelist[x]));
 			}
-	*/
+
 			currBestVal=rval;
 			currBestMove=x;
 		}
-		i=currBestMove;
-		//int r = rand() % dups;
-		//i=bestMoves[uniqueBest][r];
-		memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
+	    i = rand()%uniqueBest;
+		memcpy(bestmove, bestMoves[i], MoveLength(state.movelist[i]));
 
 	}
 	//fprintf(stderr, "We found a best move!, currBestVal: %i", currBestVal);
@@ -577,8 +576,8 @@ double numProtected(struct State *currBoard){
             }
         }
     }
-    fprintf(stderr, "Red Protected: %f\n", red_protected);
-    fprintf(stderr, "White Protected: %f\n", white_protected);
+    //fprintf(stderr, "Red Protected: %f\n", red_protected);
+    //fprintf(stderr, "White Protected: %f\n", white_protected);
 
 	if(me==1) return red_protected-white_protected;
 	else return white_protected-red_protected;
@@ -609,8 +608,8 @@ double numProtected(struct State *currBoard){
 
 double evalBoard(struct State *currBoard)
 {
-   // return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
-    return materialAdvantage(currBoard);
+   return 0.7*materialAdvantage(currBoard) + 0.3*numProtected(currBoard);
+    //return materialAdvantage(currBoard);
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
