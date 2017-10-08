@@ -521,7 +521,7 @@ double numProtected(struct State *currBoard){
         for(x=0;x<8;x++){
 		    if(king(currBoard->board[y][x])) {//king , right now this is only checking for pieces on one side
                                                 //TODO: implement both side protection
-				if(color(currBoard->board[y][x]) == 1) {
+			/*	if(color(currBoard->board[y][x]) == 1) {
                     if(y!=0){//nothing protected on the first row
                         if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
                             if(color(currBoard->board[y-1][x-1]) == 1)
@@ -545,7 +545,7 @@ double numProtected(struct State *currBoard){
                                 white_protected+=0.85;//maybe .5 for this?
                         }
                     }
-			    }
+			  *///  }
 			} else if(piece(currBoard->board[y][x])) {//pawn
 				if(color(currBoard->board[y][x]) == 1) {
                     if(y!=0){//nothing protected on the first row
@@ -558,8 +558,7 @@ double numProtected(struct State *currBoard){
                             if(color(currBoard->board[y][x]) == 1)
                                 red_protected+=0.5;//maybe .5 for this?
                         }
-                    }
-					red_protected+=1;
+                   }
 				} else if(color(currBoard->board[y][x]) == 2) {
                     if(y!=7){//nothing protected on the first row
                         if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
@@ -576,6 +575,11 @@ double numProtected(struct State *currBoard){
             }
         }
     }
+    fprintf(stderr, "Red Protected: %f\n", red_protected);
+    fprintf(stderr, "White Protected: %f\n", white_protected);
+
+	if(me==1) return red_protected-white_protected;
+	else return white_protected-red_protected;
 //	while(y<8){
 //		if(y%2) x=0;
 //		else x=1;
@@ -599,17 +603,12 @@ double numProtected(struct State *currBoard){
 //
 //		y++;
 //	}
-    fprintf(stderr, "Red Protected: %i\n", red_protected);
-    fprintf(stderr, "White Protected: %i\n", white_protected);
-
-	if(me==1) return red_protected-white_protected;
-	else return white_protected-red_protected;
 }
 
 double evalBoard(struct State *currBoard)
 {
-    //return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
-    return materialAdvantage(currBoard);
+    return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
+    //return materialAdvantage(currBoard);
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
