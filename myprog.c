@@ -267,7 +267,7 @@ int FindLegalMoves(struct State *state)
 void FindBestMove(int player)
 {
 	int i, x, currBestMove, currBestVal; 
-    char bestmovelist[48][12];
+   
     struct State state; 
 	state.player = player;
 	/* Set up the current state */
@@ -276,6 +276,9 @@ void FindBestMove(int player)
 
 	/* Find the legal moves for the current state */
 	FindLegalMoves(&state);
+	int bestMoves[48][12];
+	int dups = 0;
+	int uniqueBest = 0;
 	// For now, until you write your search routine, we will just set the best move
 	for(x = 0; x<state.numLegalMoves; x++){
 		double rval;
@@ -286,10 +289,22 @@ void FindBestMove(int player)
 		rval = minVal(nextBoard, -1000000, 1000000, MaxDepth);
 
 		if(currBestVal<=rval){//play more randomly, maybe store in an array, for duplicates of same score
+	/*		if(currBestVal==rval){
+				bestMoves[uniqueBest][dups]=x;
+				dups++;
+			}
+			else{
+				dups=0;
+				uniqueBest++;
+				bestMoves[uniqueBest][dups]=x;
+			}
+	*/
 			currBestVal=rval;
 			currBestMove=x;
 		}
 		i=currBestMove;
+		//int r = rand() % dups;
+		//i=bestMoves[uniqueBest][r];
 		memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
 
 	}
@@ -593,7 +608,8 @@ double numProtected(struct State *currBoard){
 
 double evalBoard(struct State *currBoard)
 {
-    return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
+    //return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
+    return materialAdvantage(currBoard);
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
