@@ -267,23 +267,16 @@ int FindLegalMoves(struct State *state)
 void FindBestMove(int player)
 {
 	int i, x, currBestMove, currBestVal; 
-	struct State state; 
+    char bestmovelist[48][12];
+    struct State state; 
 	state.player = player;
 	/* Set up the current state */
 	memcpy(state.board, board, 64*sizeof(char));
 	memset(bestmove,0,12*sizeof(char));
 
-
 	/* Find the legal moves for the current state */
 	FindLegalMoves(&state);
 	// For now, until you write your search routine, we will just set the best move
-	// to be a random (legal) one, so that it plays a legal game of checkers.
-	// You *will* want to replace this with a more intelligent move seleciton
-	currBestMove=rand()%state.numLegalMoves;
-	currBestVal=-10000000;
-
-	fprintf(stderr, "Performing depth %i search");
-
 	for(x = 0; x<state.numLegalMoves; x++){
 		double rval;
 		char nextBoard[8][8];
@@ -467,10 +460,10 @@ determine_next_move:
 	return 0;
 }
 
-double evalBoard(struct State *currBoard)
-{
-	int red_total=0;
-	int white_total=0;
+double materialAdvantage(struct State *currBoard){
+
+	double red_total=0;
+	double white_total=0;
 	int x=0;
 	int y=0;
 
@@ -480,10 +473,10 @@ double evalBoard(struct State *currBoard)
 		while(x<8){
 			if(king(currBoard->board[y][x])){
 				if(color(currBoard->board[y][x]) == 1){
-					red_total+=2;
+					red_total+=1.7;
 
 				} else{ 
-					white_total+=2;
+					white_total+=1.7;
 				}
 			} else if(piece(currBoard->board[y][x])) {//pawn
 				if(color(currBoard->board[y][x]) == 1) {
@@ -498,29 +491,109 @@ double evalBoard(struct State *currBoard)
 		y++;
 	}
 
-	// 	for(x=0; x<8; x++){
-	// 		for(y=0; y<8; y++){
-	// 			if(king(currBoard->board[x][y])){
-	// 				if(color(currBoard->board[x][y]) == 1){
-	// 					 red_total+=2;
-	// 
-	// 				} else{ 
-	// 					white_total+=2;
-	// 				}
-	// 			} else if(piece(currBoard->board[x][y])) {//pawn
-	// 				if(color(currBoard->board[x][y]) == 1) {
-	// 					red_total+=1;
-	// 				} else {
-	// 					white_total+=1;
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	//fprintf(stderr, "Red Board: %i\n", red_total);
-//	fprintf(stderr, "White Board: %i\n", white_total);
 	if(me==1) return red_total-white_total;
 	else return white_total-red_total;
 
+}
+
+double numProtected(struct State *currBoard){
+    
+	double red_protected=0;
+	double white_protected=0;
+	int x,y;
+    
+    for(y=0;y<8; y++){
+        for(x=0;x<8;x++){
+		    if(king(currBoard->board[y][x])) {//king , right now this is only checking for pieces on one side
+                                                //TODO: implement both side protection
+				if(color(currBoard->board[y][x]) == 1) {
+                    if(y!=0){//nothing protected on the first row
+                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
+                            if(color(currBoard->board[y-1][x-1]) == 1)
+                                red_protected+=1.7;
+                            if(color(currBoard->board[y-1][x+1]) == 1)
+                                red_protected+=1.7;
+                        } else { //if its against the wall, its protected on 1 side (i guess technically)
+                            if(color(currBoard->board[y][x]) == 1)
+                                red_protected+=0.85;//maybe .5 for this?
+                        }
+                    }
+				} else if(color(currBoard->board[y][x]) == 2) {
+                    if(y!=7){//nothing protected on the first row
+                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
+                            if(color(currBoard->board[y+1][x-1]) == 2)
+                                white_protected+=1.7;
+                            if(color(currBoard->board[y+1][x+1]) == 2)
+                                white_protected+=1.7;
+                        } else { //if its against the wall, its protected on 1 side (i guess technically)
+                            if(color(currBoard->board[y][x]) == 2)
+                                white_protected+=0.85;//maybe .5 for this?
+                        }
+                    }
+			    }
+			} else if(piece(currBoard->board[y][x])) {//pawn
+				if(color(currBoard->board[y][x]) == 1) {
+                    if(y!=0){//nothing protected on the first row
+                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
+                            if(color(currBoard->board[y-1][x-1]) == 1)
+                                red_protected+=1;
+                            if(color(currBoard->board[y-1][x+1]) == 1)
+                                red_protected+=1;
+                        } else { //if its against the wall, its protected on 1 side (i guess technically)
+                            if(color(currBoard->board[y][x]) == 1)
+                                red_protected+=0.5;//maybe .5 for this?
+                        }
+                    }
+					red_protected+=1;
+				} else if(color(currBoard->board[y][x]) == 2) {
+                    if(y!=7){//nothing protected on the first row
+                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
+                            if(color(currBoard->board[y+1][x-1]) == 2)
+                                white_protected+=1;
+                            if(color(currBoard->board[y+1][x+1]) == 2)
+                                white_protected+=1;
+                        } else { //if its against the wall, its protected on 1 side (i guess technically)
+                            if(color(currBoard->board[y][x]) == 2)
+                                white_protected+=0.5;//maybe .5 for this?
+                        }
+                    }
+			    }
+            }
+        }
+    }
+//	while(y<8){
+//		if(y%2) x=0;
+//		else x=1;
+//		while(x<8){
+//			if(king(currBoard->board[y][x])){
+//				if(color(currBoard->board[y][x]) == 1){
+//					red_total+=1.7;
+//
+//				} else{ 
+//					white_total+=1.7;
+//				}
+//			} else if(piece(currBoard->board[y][x])) {//pawn
+//				if(color(currBoard->board[y][x]) == 1) {
+//					red_total+=1;
+//				} else {
+//					white_total+=1;
+//				}
+//			}
+//			x+=2;
+//		}
+//
+//		y++;
+//	}
+    fprintf(stderr, "Red Protected: %i\n", red_protected);
+    fprintf(stderr, "White Protected: %i\n", white_protected);
+
+	if(me==1) return red_protected-white_protected;
+	else return white_protected-red_protected;
+}
+
+double evalBoard(struct State *currBoard)
+{
+    return 0.5*materialAdvantage(currBoard) + 0.5*numProtected(currBoard);
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
