@@ -18,6 +18,10 @@ int me,cutoff,endgame;
 long NumNodes;
 int MaxDepth;
 
+//proportion material vs protected
+double propMat;
+
+
 /*** For timing ***/
 clock_t start;
 struct tms bff;
@@ -279,13 +283,17 @@ void FindBestMove(int player)
 	char bestMoves[48][12];
     memset(bestMoves, 0, 48*sizeof(char));
 	//inIt dups = 0;
-	int uniqueBest = 0;
-	
+	int uniqueBest = 0;	
     currBestMove=rand()%state.numLegalMoves;
     currBestVal=-10000000;
 	// For now, until you write your search routine, we will just set the best move
 	for(x = 0; x<state.numLegalMoves; x++){
-		double rval;
+		if(LowOnTime()) {
+             fprintf(stderr, "LOW ON TIME!\n");   
+             break;
+        }
+        fprintf(stderr, "Performing Depth %i Search\n", x);
+        double rval;
 		char nextBoard[8][8];
 		//prep data
 		memcpy(nextBoard, state.board, 64*sizeof(char));
@@ -294,7 +302,7 @@ void FindBestMove(int player)
 
 		if(currBestVal<=rval){//play more randomly, maybe store in an array, for duplicates of same score
 			if(currBestVal==rval){
-				memcpy(bestMoves[uniqueBest], state.movelist[x], sizeof(state.movelist[x]));
+				memcpy(bestMoves[uniqueBest], state.movelist[x], 12*sizeof(state.movelist[x]));
 				uniqueBest++;
 			}
 			else{
@@ -305,11 +313,9 @@ void FindBestMove(int player)
 			currBestVal=rval;
 			currBestMove=x;
 		}
-	    i = rand()%uniqueBest;
-		memcpy(bestmove, bestMoves[i], MoveLength(state.movelist[i]));
-
 	}
-	//fprintf(stderr, "We found a best move!, currBestVal: %i", currBestVal);
+	i = rand()%uniqueBest;
+	memcpy(bestmove, bestMoves[i], MoveLength(state.movelist[i]));
 }
 
 /* Converts a square label to it's x,y position */
@@ -438,7 +444,8 @@ int main(int argc, char *argv[])
 	/* Set up the board */ 
 	ResetBoard();
 	srand((unsigned int)time(0));
-
+    //figure out proportions for material advantage vs protected pieces
+    propMat = (60 + rand()%20) / 100.0;
 	if (player1) {
 
 		start = times(&bff);
@@ -521,32 +528,38 @@ double numProtected(struct State *currBoard){
     for(y=0;y<8; y++){
         for(x=0;x<8;x++){
 		    if(king(currBoard->board[y][x])) {//king , right now this is only checking for pieces on one side
-                                                //TODO: implement both side protection
-			/*	if(color(currBoard->board[y][x]) == 1) {
-                    if(y!=0){//nothing protected on the first row
-                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
-                            if(color(currBoard->board[y-1][x-1]) == 1)
-                                red_protected+=1.7;
-                            if(color(currBoard->board[y-1][x+1]) == 1)
-                                red_protected+=1.7;
-                        } else { //if its against the wall, its protected on 1 side (i guess technically)
-                            if(color(currBoard->board[y][x]) == 1)
-                                red_protected+=0.85;//maybe .5 for this?
+            	if(color(currBoard->board[y][x]) == 1) {
+                    if(y!=0 && y!= 7 && x!=0 && x!=7){
+                        if(color(currBoard->board[y-1][x-1]) == 1){
+                            red_protected+=1.7;
+                        } 
+                        if (color(currBoard->board[y-1][x+1]) ==1) {
+                            red_protected+=1.7;
+                        }
+                        if (color(currBoard->board[y+1][x-1]) ==1) {
+                            red_protected+=1.7;
+                        }
+                        if (color(currBoard->board[y+1][x+1]) == 1) {
+                            red_protected+=1.7;
                         }
                     }
-				} else if(color(currBoard->board[y][x]) == 2) {
-                    if(y!=7){//nothing protected on the first row
-                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
-                            if(color(currBoard->board[y+1][x-1]) == 2)
-                                white_protected+=1.7;
-                            if(color(currBoard->board[y+1][x+1]) == 2)
-                                white_protected+=1.7;
-                        } else { //if its against the wall, its protected on 1 side (i guess technically)
-                            if(color(currBoard->board[y][x]) == 2)
-                                white_protected+=0.85;//maybe .5 for this?
+                } else if(color(currBoard->board[y][x]) == 2){ 
+                    if(y!=0 && y!= 7 && x!=0 && x!=7){
+                        if(color(currBoard->board[y-1][x-1]) == 2){
+                            white_protected+=1.7;
+                        } 
+                        if (color(currBoard->board[y-1][x+1]) == 2) {
+                            white_protected+=1.7;
+                        }
+                        if (color(currBoard->board[y+1][x-1]) == 2) {
+                            white_protected+=1.7;
+                        }
+                        if (color(currBoard->board[y+1][x+1]) == 2) {
+                            white_protected+=1.7;
                         }
                     }
-			  *///  }
+
+                }
 			} else if(piece(currBoard->board[y][x])) {//pawn
 				if(color(currBoard->board[y][x]) == 1) {
                     if(y!=0){//nothing protected on the first row
@@ -607,8 +620,8 @@ double numProtected(struct State *currBoard){
 }
 
 double evalBoard(struct State *currBoard)
-{
-   return 0.7*materialAdvantage(currBoard) + 0.3*numProtected(currBoard);
+{   
+    return propMat*materialAdvantage(currBoard) + (1.0-propMat)*numProtected(currBoard);
     //return materialAdvantage(currBoard);
 }
 
