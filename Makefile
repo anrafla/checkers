@@ -9,7 +9,7 @@ CFLAGS          += -DGRAPHICS
 
 all: checkers computer
 checkers: graphics.o
-computer: myprog.o
+computer: myprog.o timing.o
 	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ $^
 
 
