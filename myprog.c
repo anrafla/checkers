@@ -625,7 +625,6 @@ double numProtected(struct State *currState){
 double evalBoard(struct State *currBoard)
 {
     //return propMat*materialAdvantage(currBoard) + (1.0-propMat)*numProtected(currBoard);
-    //fprintf(stderr, "!!!!!!! %f", materialAdvantage(currBoard));
     return materialAdvantage(currBoard);
 
 }
