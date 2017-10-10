@@ -50,7 +50,8 @@ int LowOnTime(void)
 
     current = getMilliSeconds();
     total = (current-startTime)/1000.0;
-    if(total >= (SecPerMove-1.0)) return 1; else return 0;
+    PrintTime(); 
+    if(total >= (SecPerMove-0.5)) return 1; else return 0;
 }
 
 /* Copy a square state */
@@ -269,7 +270,7 @@ void FindBestMove(int player)
 {
     int i, x, currBestMove, currBestVal; 
     int currDepth;
-
+    int brokeEarly = 0;
     struct State state; 
     state.player = player;
     /* Set up the current state */
@@ -280,7 +281,6 @@ void FindBestMove(int player)
     FindLegalMoves(&state);
     // For now, until you write your search routine, we will just set the best move
     for(currDepth = 1; currDepth<MaxDepth; currDepth++){
-        
         int bVals[state.numLegalMoves];
         memset(bVals, 0, state.numLegalMoves*sizeof(int));
         int uniqueBest = 0;	
@@ -295,8 +295,7 @@ void FindBestMove(int player)
             PerformMove(nextBoard, state.movelist[x], MoveLength(state.movelist[x]));
             rval = minVal(nextBoard, -1000000, 1000000, currDepth);
             if(rval == -99999999999) {
-                fprintf(stderr, "LOW ON TIME!!!!", stderr); 
-                currDepth = MaxDepth;
+                brokeEarly=1;
                 break;
             }
             if(currBestVal<=rval){//play more randomly, maybe store in an array, for duplicates of same score
@@ -312,6 +311,8 @@ void FindBestMove(int player)
                 currBestVal=rval;
                 currBestMove=x;
             }
+        }
+        if(!brokeEarly){
             i = bVals[rand()%uniqueBest];
             memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
         }
