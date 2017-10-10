@@ -278,18 +278,14 @@ void FindBestMove(int player)
 
     /* Find the legal moves for the current state */
     FindLegalMoves(&state);
-    char bestMoves[48][12];
-    //////////
-    int bVals[state.numLegalMoves];
-    memset(bVals, 0, state.numLegalMoves*sizeof(int));
-    //////////
-    memset(bestMoves, 0, 48*sizeof(char));
-    //inIt dups = 0;
-    int uniqueBest = 0;	
-    currBestMove=rand()%state.numLegalMoves;
-    currBestVal=-10000000;
     // For now, until you write your search routine, we will just set the best move
     for(currDepth = 1; currDepth<MaxDepth; currDepth++){
+        
+        int bVals[state.numLegalMoves];
+        memset(bVals, 0, state.numLegalMoves*sizeof(int));
+        int uniqueBest = 0;	
+        currBestMove=rand()%state.numLegalMoves;
+        currBestVal=-10000000;
         fprintf(stderr, "Performing Depth %i.\n", currDepth);
         for(x = 0; x<state.numLegalMoves; x++){
             double rval;
@@ -305,15 +301,12 @@ void FindBestMove(int player)
             }
             if(currBestVal<=rval){//play more randomly, maybe store in an array, for duplicates of same score
                 if(fabs(currBestVal-rval) < 0.25){
-                    //  memcpy(bestMoves[uniqueBest], state.movelist[x], MoveLength(state.movelist[x]));
                     bVals[uniqueBest] = x;
                     uniqueBest++;
                 }
                 else{
-                    //memset(bestMoves, 0, 48*sizeof(char));
                     uniqueBest=1;
                     bVals[0] = x;
-                    //memcpy(bestMoves[0], state.movelist[x], MoveLength(state.movelist[x]));
                 }
 
                 currBestVal=rval;
@@ -630,8 +623,10 @@ double numProtected(struct State *currState){
 
 double evalBoard(struct State *currBoard)
 {
-    return propMat*materialAdvantage(currBoard) + (1.0-propMat)*numProtected(currBoard);
-    //return materialAdvantage(currBoard);
+    //return propMat*materialAdvantage(currBoard) + (1.0-propMat)*numProtected(currBoard);
+    //fprintf(stderr, "!!!!!!! %f", materialAdvantage(currBoard));
+    return materialAdvantage(currBoard);
+
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
@@ -664,7 +659,7 @@ double minVal(char currBoard[8][8], double alpha, double beta, int depth)
         memcpy(nextBoard,currBoard,sizeof(nextBoard));
         PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
         max = maxVal(nextBoard, alpha, beta, depth);
-        if(max == -99999999999) return -99999999999;
+        if(max == -99999999999) return max;
         if(max<beta) beta=max;
         if(alpha>=beta) return alpha;
     }
@@ -702,7 +697,7 @@ double maxVal(char currBoard[8][8], double alpha, double beta, int depth)
         PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
 
         min = minVal(nextBoard, alpha, beta, depth);
-        if(min == -99999999999) return -99999999999;
+        if(min == -99999999999) return min;
         if(min>alpha) alpha = min;
         if(alpha>=beta) return beta;
     }
