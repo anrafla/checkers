@@ -24,6 +24,7 @@ float SecPerMove;
 int turn,playing=0;
 int player[2];
 int MaxDepth;
+int numMoves =0;
 
 int player1Java;
 int player2Java;
@@ -736,6 +737,8 @@ int main(int argc, char *argv[])
                         UpdateBoard();
 #else
                         printf("Move: %s\n",text);
+                        numMoves++;
+                        printf("Move Number %i\n", numMoves);
                         PrintBoard();
 #endif
                         if(turn) turn=0; else turn=1;

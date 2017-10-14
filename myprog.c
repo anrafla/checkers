@@ -50,7 +50,6 @@ int LowOnTime(void)
 
     current = getMilliSeconds();
     total = (current-startTime)/1000.0;
-    PrintTime(); 
     if(total >= (SecPerMove-0.5)) return 1; else return 0;
 }
 
@@ -268,7 +267,8 @@ int FindLegalMoves(struct State *state)
 /* and the PerformMove function */
 void FindBestMove(int player)
 {
-    int i, x, currBestMove, currBestVal; 
+    int i, x, currBestMove;
+    double currBestVal; 
     int currDepth;
     int brokeEarly = 0;
     struct State state; 
@@ -282,11 +282,10 @@ void FindBestMove(int player)
     // For now, until you write your search routine, we will just set the best move
     for(currDepth = 1; currDepth<MaxDepth; currDepth++){
         int bVals[state.numLegalMoves];
-        memset(bVals, 0, state.numLegalMoves*sizeof(int));
+        memset(bVals, 0, state.numLegalMoves*sizeof(int));    
         int uniqueBest = 0;	
         currBestMove=rand()%state.numLegalMoves;
         currBestVal=-10000000;
-        fprintf(stderr, "Performing Depth %i.\n", currDepth);
         for(x = 0; x<state.numLegalMoves; x++){
             double rval;
             char nextBoard[8][8];
@@ -294,17 +293,18 @@ void FindBestMove(int player)
             memcpy(nextBoard, state.board, 64*sizeof(char));
             PerformMove(nextBoard, state.movelist[x], MoveLength(state.movelist[x]));
             rval = minVal(nextBoard, -1000000, 1000000, currDepth);
-            if(rval == -99999999999) {
+	    if(rval == -99999999999) {
                 brokeEarly=1;
                 break;
             }
             if(currBestVal<=rval){//play more randomly, maybe store in an array, for duplicates of same score
-                if(fabs(currBestVal-rval) < 0.25){
+                if(currBestVal == rval){
                     bVals[uniqueBest] = x;
                     uniqueBest++;
                 }
                 else{
                     uniqueBest=1;
+                    memset(bVals, 0, state.numLegalMoves*sizeof(int));    
                     bVals[0] = x;
                 }
 
@@ -317,7 +317,6 @@ void FindBestMove(int player)
             memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
         }
     }
-    fprintf(stderr, "Performed Depth  %i \n", currDepth-1);
 }
 
 /* Converts a square label to it's x,y position */
@@ -423,7 +422,7 @@ int main(int argc, char *argv[])
     /* Convert command line parameters */
     SecPerMove = (float) atof(argv[1]); /* Time allotted for each move */
     MaxDepth = (argc == 4) ? atoi(argv[3]) : 10;
-    MaxDepth = 100;
+    MaxDepth = 25;
 
     fprintf(stderr, "%s SecPerMove == %lg\n", argv[0], SecPerMove);
 
@@ -499,10 +498,10 @@ double materialAdvantage(struct State *currState){
         while(x<8){
             if(king(currState->board[y][x])){
                 if(color(currState->board[y][x]) == 1){
-                    red_total+=1.7;
+                    red_total+=2.5;
 
                 } else{ 
-                    white_total+=1.7;
+                    white_total+=2.5;
                 }
             } else if(piece(currState->board[y][x])) {//pawn
                 if(color(currState->board[y][x]) == 1) {
@@ -517,8 +516,17 @@ double materialAdvantage(struct State *currState){
         y++;
     }
 
-    if(currState->player == 1) return red_total-white_total;
-    else return white_total-red_total;
+    if(currState->player == 1){
+        if(white_total == 0) 
+            return red_total*2;
+        else
+            return red_total/white_total;
+    } else {
+        if(red_total == 0)
+            return white_total*2;
+        else
+            return white_total/red_total;
+    }
 
 }
 
