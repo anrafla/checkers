@@ -16,7 +16,7 @@
 #define Clear 0x1f
 
 struct State {
-    int player;
+    int player; //1 for red, 2 for white
     char board[8][8];
     char movelist[48][12]; /* The following comments were added by Tim Andersen
                   Here Scott has set the maximum number of possible legal moves to be 48.

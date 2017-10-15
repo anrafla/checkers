@@ -18,7 +18,7 @@
 float SecPerMove;
 char board[8][8];
 char bestmove[12];
-int me,cutoff,endgame;
+int me, cutoff,endgame;
 long NumNodes;
 int MaxDepth;
 
@@ -304,7 +304,7 @@ void FindBestMove(int player)
                 }
                 else{
                     uniqueBest=1;
-                    memset(bVals, 0, state.numLegalMoves*sizeof(int));    
+                    //memset(bVals, 0, state.numLegalMoves*sizeof(int));    
                     bVals[0] = x;
                 }
 
@@ -417,7 +417,7 @@ void PerformMove(char board[8][8], char move[12], int mlen)
 int main(int argc, char *argv[])
 {
     char buf[1028],move[12];
-    int len,mlen,player1;
+    int len,mlen;
 
     /* Convert command line parameters */
     SecPerMove = (float) atof(argv[1]); /* Time allotted for each move */
@@ -432,21 +432,18 @@ int main(int argc, char *argv[])
     if(!strncmp(buf,"Player1", strlen("Player1"))) 
     {
         fprintf(stderr, "I'm Player 1\n");
-        player1 = 1; 
+        me = 1; 
     }
     else 
     {
         fprintf(stderr, "I'm Player 2\n");
-        player1 = 0;
+        me = 2;
     }
-    if(player1) me = 1; else me = 2;
 
     /* Set up the board */ 
     ResetBoard();
     srand((unsigned int)time(0));
-    //figure out proportions for material advantage vs protected pieces
-    propMat = (70 + rand()%20) / 100.0;
-    if (player1) {
+    if (me == 1) {
 
         startTime = getMilliSeconds();
         goto determine_next_move;
@@ -467,7 +464,7 @@ int main(int argc, char *argv[])
 
 determine_next_move:
         /* Find my move, update board, and write move to pipe */
-        if(player1) FindBestMove(1); else FindBestMove(2);
+        FindBestMove(me);
         if(bestmove[0] != 0) { /* There is a legal move */
             mlen = MoveLength(bestmove);
             PerformMove(board,bestmove,mlen);
@@ -484,30 +481,30 @@ determine_next_move:
     return 0;
 }
 
-double materialAdvantage(struct State *currState,int ahead){
+double materialAdvantage(struct State *currState, int ahead){
 
     double red_total=0;
     double white_total=0;
     int x=0;
     int y=0;
     int p=0;
-    
+
 
     while(y<8){
         if(y%2) x=0;
         else x=1;
         while(x<8){
 
-           
-	    p=position(x,y);
-	    if(ahead==1){
-		p=positionAhead(x,y);
-		}
-	    
-	
+
+            p=position(x,y);
+            if(ahead==1){
+                p=positionAhead(x,y);
+            }
+
+
             if(king(currState->board[y][x])){
                 if(color(currState->board[y][x]) == 1){ 
-				    	
+
                     red_total+=2.5*p;
 
                 } else{ 
@@ -525,7 +522,6 @@ double materialAdvantage(struct State *currState,int ahead){
 
         y++;
     }
-
     if(currState->player == 1){
         if(white_total == 0) 
             return INT_MAX;
@@ -547,19 +543,19 @@ bool Ahead(struct State *currState){
     int x=0;
     int y=0;
     int p=0;
-    
+
 
     while(y<8){
         if(y%2) x=0;
         else x=1;
         while(x<8){
 
-                p=position(x,y);
-	    
-	
+            p=position(x,y);
+
+
             if(king(currState->board[y][x])){
                 if(color(currState->board[y][x]) == 1){ 
-				    	
+
                     red_total+=2.5*p;
 
                 } else{ 
@@ -579,59 +575,46 @@ bool Ahead(struct State *currState){
     }
 
     if(currState->player == 1){
-        if(white_total == 0) 
-            return INT_MAX;
-        else
-	    if(red_total/white_total>1){
-            return 1;
-	    }
-	    else{
-	    return 0;
-	    }
+            if(red_total > white_total)
+                return 1;
     } else {
-        if(red_total == 0)
-            return INT_MAX;
-        else
-	    if(white_total/red_total>1){
+        if(white_total>red_total)
             return 1;
-	    }
-	    else{
-	    return 0;
-	    }
     }
+    return 0;
 
 }
 int position(int x, int y){
 
-	if(x==0 || y==0 || x==7 || y==7){
-		return 4;
-	}
-	else if(x==1 || y==1 || x==6 || y==6){
-		return 3;
-	}
-	else if(x==2 || y==2 || x==5 || y==5){
-		return 2;
-	}
-	else if(x==3 || y==3){
-		return 1;
-	}
+    if(x==0 || y==0 || x==7 || y==7){
+        return 4;
+    }
+    else if(x==1 || y==1 || x==6 || y==6){
+        return 3;
+    }
+    else if(x==2 || y==2 || x==5 || y==5){
+        return 2;
+    }
+    else if(x==3 || y==3){
+        return 1;
+    }
 
 }
 
 int positionAhead(int x, int y){
 
-	if(x==0 || y==0 || x==7 || y==7){
-		return 1;
-	}
-	else if(x==1 || y==1 || x==6 || y==6){
-		return 2;
-	}
-	else if(x==2 || y==2 || x==5 || y==5){
-		return 3;
-	}
-	else if(x==3 || y==3){
-		return 4;
-	}
+    if(x==0 || y==0 || x==7 || y==7){
+        return 1;
+    }
+    else if(x==1 || y==1 || x==6 || y==6){
+        return 2;
+    }
+    else if(x==2 || y==2 || x==5 || y==5){
+        return 3;
+    }
+    else if(x==3 || y==3){
+        return 4;
+    }
 
 }
 
@@ -737,14 +720,13 @@ int numProtected(struct State *currState){
     //	}
 }
 
-double evalBoard(struct State *currBoard)
+double evalBoard(struct State *currState)
 {
-    //fprintf(stderr,"Protected: %d\n",numProtected(currBoard));
-    if(Ahead(currBoard)){
-    return materialAdvantage(currBoard,1);
-	}
-    else return materialAdvantage(currBoard,0);
-	
+    if(Ahead(currState)){
+        return materialAdvantage(currState,1);
+    }
+    else return materialAdvantage(currState,0);
+
 
 }
 
@@ -760,18 +742,17 @@ double minVal(char currBoard[8][8], double alpha, double beta, int depth, int *b
 
     /* Set up the current state */
     memcpy(state.board,currBoard,64*sizeof(char));
-    
+    state.player = (me == 1?2:1);
+
     // Deal with depth limit
-    
     depth--;
     if(depth<=0)
-    {        
-        state.player = me;
+    { 
+        state.player = me;       
         return evalBoard(&state);
     }
 
     // You've gotta setup the board with the correct player
-    state.player = ((me==1)?2:1);
     /* Find the legal moves for the current state */
     FindLegalMoves(&state);
 
@@ -801,6 +782,8 @@ double maxVal(char currBoard[8][8], double alpha, double beta, int depth, int *b
 
     /* Set up the next state's board */
     memcpy(state.board,currBoard,64*sizeof(char));
+    
+    state.player = me; 
     // Deal with depth limit
     depth--;
     if(depth<=0)
@@ -810,7 +793,6 @@ double maxVal(char currBoard[8][8], double alpha, double beta, int depth, int *b
     }
 
     // You've gotta setup the board with the correct player, 
-    state.player = ((me==1)?1:2);
 
     /* Find the legal moves for the current state */
     FindLegalMoves(&state);
