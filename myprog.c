@@ -518,12 +518,12 @@ double materialAdvantage(struct State *currState){
 
     if(currState->player == 1){
         if(white_total == 0) 
-            return red_total*2;
+            return INT_MAX;
         else
             return red_total/white_total;
     } else {
         if(red_total == 0)
-            return white_total*2;
+            return INT_MAX;
         else
             return white_total/red_total;
     }
