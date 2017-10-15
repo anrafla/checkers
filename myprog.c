@@ -6,6 +6,7 @@
 #include <sys/times.h>
 #include <time.h>
 #include <math.h>
+#include <limits.h>
 #include "myprog.h"
 
 #ifndef CLK_TCK
@@ -50,7 +51,7 @@ int LowOnTime(void)
 
     current = getMilliSeconds();
     total = (current-startTime)/1000.0;
-    if(total >= (SecPerMove-0.5)) return 1; else return 0;
+    if(total >= (SecPerMove-0.3)) return 1; else return 0;
 }
 
 /* Copy a square state */
@@ -267,9 +268,8 @@ int FindLegalMoves(struct State *state)
 /* and the PerformMove function */
 void FindBestMove(int player)
 {
-    int i, x, currBestMove;
+    int i, x, currDepth;
     double currBestVal; 
-    int currDepth;
     int brokeEarly = 0;
     struct State state; 
     state.player = player;
@@ -284,18 +284,16 @@ void FindBestMove(int player)
         int bVals[state.numLegalMoves];
         memset(bVals, 0, state.numLegalMoves*sizeof(int));    
         int uniqueBest = 0;	
-        currBestMove=rand()%state.numLegalMoves;
-        currBestVal=-10000000;
+        currBestVal=INT_MIN;
         for(x = 0; x<state.numLegalMoves; x++){
             double rval;
             char nextBoard[8][8];
             //prep data
             memcpy(nextBoard, state.board, 64*sizeof(char));
             PerformMove(nextBoard, state.movelist[x], MoveLength(state.movelist[x]));
-            rval = minVal(nextBoard, -1000000, 1000000, currDepth);
-	    if(rval == -99999999999) {
-                brokeEarly=1;
-                break;
+            rval = minVal(nextBoard, INT_MIN, INT_MAX, currDepth, &brokeEarly);
+            if(brokeEarly){
+                return;
             }
             if(currBestVal<=rval){//play more randomly, maybe store in an array, for duplicates of same score
                 if(currBestVal == rval){
@@ -309,11 +307,11 @@ void FindBestMove(int player)
                 }
 
                 currBestVal=rval;
-                currBestMove=x;
             }
         }
         if(!brokeEarly){
             i = bVals[rand()%uniqueBest];
+            memset(bestmove, 0, sizeof(bestmove));
             memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
         }
     }
@@ -421,8 +419,7 @@ int main(int argc, char *argv[])
 
     /* Convert command line parameters */
     SecPerMove = (float) atof(argv[1]); /* Time allotted for each move */
-    MaxDepth = (argc == 4) ? atoi(argv[3]) : 10;
-    MaxDepth = 25;
+    MaxDepth = (argc == 4) ? atoi(argv[3]) : 100;
 
     fprintf(stderr, "%s SecPerMove == %lg\n", argv[0], SecPerMove);
 
@@ -657,19 +654,24 @@ double evalBoard(struct State *currBoard)
 
 }
 
-double minVal(char currBoard[8][8], double alpha, double beta, int depth)
+double minVal(char currBoard[8][8], double alpha, double beta, int depth, int *brokeEarly)
 {
-    if(LowOnTime()) return -99999999999;
+    if(LowOnTime()){
+        *brokeEarly = 1;
+        return -1;
+    };
+
     int i;
     struct State state;
 
     /* Set up the current state */
     memcpy(state.board,currBoard,64*sizeof(char));
-
+    
     // Deal with depth limit
+    
     depth--;
     if(depth<=0)
-    {
+    {        
         state.player = me;
         return evalBoard(&state);
     }
@@ -686,17 +688,20 @@ double minVal(char currBoard[8][8], double alpha, double beta, int depth)
         double max;
         memcpy(nextBoard,currBoard,sizeof(nextBoard));
         PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
-        max = maxVal(nextBoard, alpha, beta, depth);
-        if(max == -99999999999) return max;
+        max = maxVal(nextBoard, alpha, beta, depth, brokeEarly);
+        if(*brokeEarly) return INT_MIN;
         if(max<beta) beta=max;
         if(alpha>=beta) return alpha;
     }
     return beta;
 }
 
-double maxVal(char currBoard[8][8], double alpha, double beta, int depth)
+double maxVal(char currBoard[8][8], double alpha, double beta, int depth, int *brokeEarly)
 {
-    if(LowOnTime()) return -99999999999;
+    if(LowOnTime()){
+        *brokeEarly = 1;
+        return -1;
+    };
     int i;
     struct State state;
 
@@ -724,8 +729,8 @@ double maxVal(char currBoard[8][8], double alpha, double beta, int depth)
         memcpy(nextBoard,currBoard,sizeof(nextBoard));
         PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
 
-        min = minVal(nextBoard, alpha, beta, depth);
-        if(min == -99999999999) return min;
+        min = minVal(nextBoard, alpha, beta, depth, brokeEarly);
+        if(*brokeEarly) return INT_MIN;
         if(min>alpha) alpha = min;
         if(alpha>=beta) return beta;
     }
