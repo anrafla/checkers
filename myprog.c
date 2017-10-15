@@ -8,6 +8,8 @@
 #include <math.h>
 #include <limits.h>
 #include "myprog.h"
+#include <stdbool.h>
+
 
 #ifndef CLK_TCK
 #define CLK_TCK CLOCKS_PER_SEC
@@ -482,22 +484,30 @@ determine_next_move:
     return 0;
 }
 
-double materialAdvantage(struct State *currState){
+double materialAdvantage(struct State *currState,int ahead){
 
     double red_total=0;
     double white_total=0;
     int x=0;
     int y=0;
     int p=0;
+    
 
     while(y<8){
         if(y%2) x=0;
         else x=1;
         while(x<8){
-            p=position(x,y);
+
+           
+	    p=position(x,y);
+	    if(ahead==1){
+		p=positionAhead(x,y);
+		}
+	    
+	
             if(king(currState->board[y][x])){
-                if(color(currState->board[y][x]) == 1){
-	 	    	
+                if(color(currState->board[y][x]) == 1){ 
+				    	
                     red_total+=2.5*p;
 
                 } else{ 
@@ -530,6 +540,67 @@ double materialAdvantage(struct State *currState){
 
 }
 
+bool Ahead(struct State *currState){
+
+    double red_total=0;
+    double white_total=0;
+    int x=0;
+    int y=0;
+    int p=0;
+    
+
+    while(y<8){
+        if(y%2) x=0;
+        else x=1;
+        while(x<8){
+
+                p=position(x,y);
+	    
+	
+            if(king(currState->board[y][x])){
+                if(color(currState->board[y][x]) == 1){ 
+				    	
+                    red_total+=2.5*p;
+
+                } else{ 
+                    white_total+=2.5*p;
+                }
+            } else if(piece(currState->board[y][x])) {//pawn
+                if(color(currState->board[y][x]) == 1) {
+                    red_total+=1*p;
+                } else {
+                    white_total+=1*p;
+                }
+            }
+            x+=2;
+        }
+
+        y++;
+    }
+
+    if(currState->player == 1){
+        if(white_total == 0) 
+            return INT_MAX;
+        else
+	    if(red_total/white_total>1){
+            return 1;
+	    }
+	    else{
+	    return 0;
+	    }
+    } else {
+        if(red_total == 0)
+            return INT_MAX;
+        else
+	    if(white_total/red_total>1){
+            return 1;
+	    }
+	    else{
+	    return 0;
+	    }
+    }
+
+}
 int position(int x, int y){
 
 	if(x==0 || y==0 || x==7 || y==7){
@@ -547,10 +618,29 @@ int position(int x, int y){
 
 }
 
-double numProtected(struct State *currState){
+int positionAhead(int x, int y){
 
-    double red_protected=0;
-    double white_protected=0;
+	if(x==0 || y==0 || x==7 || y==7){
+		return 1;
+	}
+	else if(x==1 || y==1 || x==6 || y==6){
+		return 2;
+	}
+	else if(x==2 || y==2 || x==5 || y==5){
+		return 3;
+	}
+	else if(x==3 || y==3){
+		return 4;
+	}
+
+}
+
+
+
+int numProtected(struct State *currState){
+
+    int red_protected=0;
+    int  white_protected=0;
     int x,y;
 
     for(y=0;y<8; y++){
@@ -559,31 +649,31 @@ double numProtected(struct State *currState){
                 if(color(currState->board[y][x]) == 1) {
                     if(y!=0 && y!= 7 && x!=0 && x!=7){
                         if(color(currState->board[y-1][x-1]) == 1){
-                            red_protected+=1.7;
+                            red_protected+=1;
                         } 
                         if (color(currState->board[y-1][x+1]) ==1) {
-                            red_protected+=1.7;
+                            red_protected+=1;
                         }
                         if (color(currState->board[y+1][x-1]) ==1) {
-                            red_protected+=1.7;
+                            red_protected+=1;
                         }
                         if (color(currState->board[y+1][x+1]) == 1) {
-                            red_protected+=1.7;
+                            red_protected+=1;
                         }
                     }
                 } else if(color(currState->board[y][x]) == 2){ 
                     if(y!=0 && y!= 7 && x!=0 && x!=7){
                         if(color(currState->board[y-1][x-1]) == 2){
-                            white_protected+=1.7;
+                            white_protected+=1;
                         } 
                         if (color(currState->board[y-1][x+1]) == 2) {
-                            white_protected+=1.7;
+                            white_protected+=1;
                         }
                         if (color(currState->board[y+1][x-1]) == 2) {
-                            white_protected+=1.7;
+                            white_protected+=1;
                         }
                         if (color(currState->board[y+1][x+1]) == 2) {
-                            white_protected+=1.7;
+                            white_protected+=1;
                         }
                     }
 
@@ -598,7 +688,7 @@ double numProtected(struct State *currState){
                                 red_protected+=1;
                         } else { //if its against the wall, its protected on 1 side (i guess technically)
                             if(color(currState->board[y][x]) == 1)
-                                red_protected+=0.5;//maybe .5 for this?
+                                red_protected+=2;//maybe .5 for this?
                         }
                     }
                 } else if(color(currState->board[y][x]) == 2) {
@@ -610,7 +700,7 @@ double numProtected(struct State *currState){
                                 white_protected+=1;
                         } else { //if its against the wall, its protected on 1 side (i guess technically)
                             if(color(currState->board[y][x]) == 2)
-                                white_protected+=0.5;//maybe .5 for this?
+                                white_protected+=2;//maybe .5 for this?
                         }
                     }
                 }
@@ -649,8 +739,12 @@ double numProtected(struct State *currState){
 
 double evalBoard(struct State *currBoard)
 {
-    //return propMat*materialAdvantage(currBoard) + (1.0-propMat)*numProtected(currBoard);
-    return materialAdvantage(currBoard);
+    //fprintf(stderr,"Protected: %d\n",numProtected(currBoard));
+    if(Ahead(currBoard)){
+    return materialAdvantage(currBoard,1);
+	}
+    else return materialAdvantage(currBoard,0);
+	
 
 }
 
