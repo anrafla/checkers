@@ -491,23 +491,26 @@ double materialAdvantage(struct State *currState){
     double white_total=0;
     int x=0;
     int y=0;
+    int p=0;
 
     while(y<8){
         if(y%2) x=0;
         else x=1;
         while(x<8){
+            p=position(x,y);
             if(king(currState->board[y][x])){
                 if(color(currState->board[y][x]) == 1){
-                    red_total+=2.5;
+	 	    	
+                    red_total+=2.5*p;
 
                 } else{ 
-                    white_total+=2.5;
+                    white_total+=2.5*p;
                 }
             } else if(piece(currState->board[y][x])) {//pawn
                 if(color(currState->board[y][x]) == 1) {
-                    red_total+=1;
+                    red_total+=1*p;
                 } else {
-                    white_total+=1;
+                    white_total+=1*p;
                 }
             }
             x+=2;
@@ -527,6 +530,23 @@ double materialAdvantage(struct State *currState){
         else
             return white_total/red_total;
     }
+
+}
+
+int position(int x, int y){
+
+	if(x==0 || y==0 || x==7 || y==7){
+		return 4;
+	}
+	else if(x==1 || y==1 || x==6 || y==6){
+		return 3;
+	}
+	else if(x==2 || y==2 || x==5 || y==5){
+		return 2;
+	}
+	else if(x==3 || y==3){
+		return 1;
+	}
 
 }
 
