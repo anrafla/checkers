@@ -732,7 +732,7 @@ double evalBoard(struct State *currState)
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth, int *brokeEarly)
 {
-    if(LowOnTime()){
+    if(*brokeEarly || LowOnTime()){
         *brokeEarly = 1;
         return -1;
     };
@@ -773,7 +773,7 @@ double minVal(char currBoard[8][8], double alpha, double beta, int depth, int *b
 
 double maxVal(char currBoard[8][8], double alpha, double beta, int depth, int *brokeEarly)
 {
-    if(LowOnTime()){
+    if(*brokeEarly || LowOnTime()){
         *brokeEarly = 1;
         return -1;
     };
@@ -806,7 +806,7 @@ double maxVal(char currBoard[8][8], double alpha, double beta, int depth, int *b
         PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
 
         min = minVal(nextBoard, alpha, beta, depth, brokeEarly);
-        if(*brokeEarly) return INT_MIN;
+        if(*brokeEarly) return INT_MAX;
         if(min>alpha) alpha = min;
         if(alpha>=beta) return beta;
     }
