@@ -481,7 +481,7 @@ determine_next_move:
     return 0;
 }
 
-double materialAdvantage(struct State *currState, int ahead){
+double materialAdvantage(struct State *currState){
 
     double red_total=0;
     double white_total=0;
@@ -494,14 +494,8 @@ double materialAdvantage(struct State *currState, int ahead){
         if(y%2) x=0;
         else x=1;
         while(x<8){
-
-
             p=position(x,y);
-            if(ahead==1){
-                p=positionAhead(x,y);
-            }
-
-
+            
             if(king(currState->board[y][x])){
                 if(color(currState->board[y][x]) == 1){ 
 
@@ -536,54 +530,6 @@ double materialAdvantage(struct State *currState, int ahead){
 
 }
 
-bool Ahead(struct State *currState){
-
-    double red_total=0;
-    double white_total=0;
-    int x=0;
-    int y=0;
-    int p=0;
-
-
-    while(y<8){
-        if(y%2) x=0;
-        else x=1;
-        while(x<8){
-
-            p=position(x,y);
-
-
-            if(king(currState->board[y][x])){
-                if(color(currState->board[y][x]) == 1){ 
-
-                    red_total+=2.5*p;
-
-                } else{ 
-                    white_total+=2.5*p;
-                }
-            } else if(piece(currState->board[y][x])) {//pawn
-                if(color(currState->board[y][x]) == 1) {
-                    red_total+=1*p;
-                } else {
-                    white_total+=1*p;
-                }
-            }
-            x+=2;
-        }
-
-        y++;
-    }
-
-    if(currState->player == 1){
-            if(red_total > white_total)
-                return 1;
-    } else {
-        if(white_total>red_total)
-            return 1;
-    }
-    return 0;
-
-}
 int position(int x, int y){
 
     if(x==0 || y==0 || x==7 || y==7){
@@ -600,134 +546,9 @@ int position(int x, int y){
     }
 
 }
-
-int positionAhead(int x, int y){
-
-    if(x==0 || y==0 || x==7 || y==7){
-        return 1;
-    }
-    else if(x==1 || y==1 || x==6 || y==6){
-        return 2;
-    }
-    else if(x==2 || y==2 || x==5 || y==5){
-        return 3;
-    }
-    else if(x==3 || y==3){
-        return 4;
-    }
-
-}
-
-
-
-int numProtected(struct State *currState){
-
-    int red_protected=0;
-    int  white_protected=0;
-    int x,y;
-
-    for(y=0;y<8; y++){
-        for(x=0;x<8;x++){
-            if(king(currState->board[y][x])) {//king , right now this is only checking for pieces on one side
-                if(color(currState->board[y][x]) == 1) {
-                    if(y!=0 && y!= 7 && x!=0 && x!=7){
-                        if(color(currState->board[y-1][x-1]) == 1){
-                            red_protected+=1;
-                        } 
-                        if (color(currState->board[y-1][x+1]) ==1) {
-                            red_protected+=1;
-                        }
-                        if (color(currState->board[y+1][x-1]) ==1) {
-                            red_protected+=1;
-                        }
-                        if (color(currState->board[y+1][x+1]) == 1) {
-                            red_protected+=1;
-                        }
-                    }
-                } else if(color(currState->board[y][x]) == 2){ 
-                    if(y!=0 && y!= 7 && x!=0 && x!=7){
-                        if(color(currState->board[y-1][x-1]) == 2){
-                            white_protected+=1;
-                        } 
-                        if (color(currState->board[y-1][x+1]) == 2) {
-                            white_protected+=1;
-                        }
-                        if (color(currState->board[y+1][x-1]) == 2) {
-                            white_protected+=1;
-                        }
-                        if (color(currState->board[y+1][x+1]) == 2) {
-                            white_protected+=1;
-                        }
-                    }
-
-                }
-            } else if(piece(currState->board[y][x])) {//pawn
-                if(color(currState->board[y][x]) == 1) {
-                    if(y!=0){//nothing protected on the first row
-                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
-                            if(color(currState->board[y-1][x-1]) == 1)
-                                red_protected+=1;
-                            if(color(currState->board[y-1][x+1]) == 1)
-                                red_protected+=1;
-                        } else { //if its against the wall, its protected on 1 side (i guess technically)
-                            if(color(currState->board[y][x]) == 1)
-                                red_protected+=2;//maybe .5 for this?
-                        }
-                    }
-                } else if(color(currState->board[y][x]) == 2) {
-                    if(y!=7){//nothing protected on the first row
-                        if(x>0 && x<7){//middle pieces, have potential protection from both sides behind it
-                            if(color(currState->board[y+1][x-1]) == 2)
-                                white_protected+=1;
-                            if(color(currState->board[y+1][x+1]) == 2)
-                                white_protected+=1;
-                        } else { //if its against the wall, its protected on 1 side (i guess technically)
-                            if(color(currState->board[y][x]) == 2)
-                                white_protected+=2;//maybe .5 for this?
-                        }
-                    }
-                }
-            }
-        }
-    }
-    //fprintf(stderr, "Red Protected: %f\n", red_protected);
-    //fprintf(stderr, "White Protected: %f\n", white_protected);
-
-    if(currState->player  ==1) return red_protected-white_protected;
-    else return white_protected-red_protected;
-    //	while(y<8){
-    //		if(y%2) x=0;
-    //		else x=1;
-    //		while(x<8){
-    //			if(king(currBoard->board[y][x])){
-    //				if(color(currBoard->board[y][x]) == 1){
-    //					red_total+=1.7;
-    //
-    //				} else{ 
-    //					white_total+=1.7;
-    //				}
-    //			} else if(piece(currBoard->board[y][x])) {//pawn
-    //				if(color(currBoard->board[y][x]) == 1) {
-    //					red_total+=1;
-    //				} else {
-    //					white_total+=1;
-    //				}
-    //			}
-    //			x+=2;
-    //		}
-    //
-    //		y++;
-    //	}
-}
-
 double evalBoard(struct State *currState)
 {
-    if(Ahead(currState)){
-        return materialAdvantage(currState,1);
-    }
-    else return materialAdvantage(currState,0);
-
-
+    return materialAdvantage(currState);
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth, int *brokeEarly)
